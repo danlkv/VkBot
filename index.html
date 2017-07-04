@@ -1,0 +1,90 @@
+<html>
+
+<head>
+    <title>vk AI Bot</title>
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Put this script tag to the <head> of your page -->
+    <script type="text/javascript" src="//vk.com/js/api/openapi.js?146"></script>
+
+    <script type="text/javascript">
+        VK.init({ apiId: 6098753   });
+    </script>
+</head>
+
+<body style="font-family:Arial, Helvetica, sans-serif; margin:0">
+    <div id="head">
+        <h1>Controll panel of your bot</h1>
+    </div>
+    <hr align="left" width="35%"></hr>
+    <div id = "bod">
+    <div class="vkauth">
+        <!-- VK auth Widget -->
+        <div id="vk_auth"></div>
+    </div>
+    <iframe width="100px" src="http://vk.cotr.me/vk/Login"></iframe>
+    <h3 id ="loglab" >Log file</h3>
+    <div id="log"></div>
+    </div>
+    <!-- STYLES -->
+    <style>
+        #head{
+            width: 100%;
+            height: 50px;
+            background-color: #EEEEFE;
+            margin: -12 0;
+            padding: 15px;
+        }
+        hr {color: #aaF;}
+        #bod{
+            margin: 5 15 5;
+        }
+        h1{
+            font-size: 28px;
+            color: #333;
+        }
+        .vkauth{
+            margin: 30px;
+        }
+        #loglab{
+            position: relative;
+            width: 250px; 
+            margin: 120px -80px 0px;          
+            font-size: 60px;
+            color:#EEE;
+            -webkit-transform: rotate(90deg);   
+            -moz-transform: rotate(90deg);
+            -ms-transform: rotate(90deg);
+            -o-transform: rotate(90deg);
+            transform: rotate(90deg);
+        }
+        #log{
+            position: absolute;
+            width: 70%;
+            margin: 0 17% 0;
+            top:250px;
+        }
+
+    </style>
+    <!-- SCRIPTS -->
+
+    <script>
+        var l = document.getElementById("log")
+        var req = new XMLHttpRequest()
+        req.open('GET', '/log', false);
+        req.onreadystatechange = function () {
+            if (req.readyState == 4 && req.status == 200) {
+                l.innerHTML = req.responseText;
+            }
+            console.log("making request");
+
+        }
+        req.send()
+    </script>
+
+    <script type="text/javascript">
+        VK.Widgets.Auth("vk_auth", { authUrl: '/vk/Login' });
+    </script>
+    
+</body>
+
+</html>

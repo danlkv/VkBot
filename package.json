@@ -1,0 +1,30 @@
+{
+  "name": "vkbot",
+  "version": "1.0.0",
+  "description": "a bot for chatting using api ai",
+  "main": "server.js",
+  "dependencies": {
+    "cron": "^1.2.1",
+    "express": "^4.15.3",
+    "log4js": "^1.1.1",
+    "node-cron": "^1.2.0",
+    "querystring-browser": "^1.0.4",
+    "request": "^2.81.0",
+    "response": "^0.18.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DaniloZZZ/VKbot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DaniloZZZ/VKbot/issues"
+  },
+  "homepage": "https://github.com/DaniloZZZ/VKbot#readme"
+}
