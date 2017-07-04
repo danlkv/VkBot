@@ -3,7 +3,6 @@ var app = express();
 var fs = require('fs');
 var cronJob = require('cron').CronJob;
 var request = require('request');
-var qs = require('querystring-browser');
 
 var PORT = 4567;
 var apID = 6098753;
@@ -15,37 +14,37 @@ var logger = confLog(log4js);
 console.log("Server lisetening in port " + PORT);
 app.listen(PORT);
 
-var job = new cronJob('*/5 * *  *  *  *', MainBot);
+var job = new cronJob('*/8 * *  *  *  *', MainBot);
 job.start();
 
 num = 0
-function MainBot() {
+function MainBot(){
 
-	num = num + 1;
-	console.log("Cron job, call num " + num);
+	num = num+1;
+	console.log("Cron job, call num "+num);
 	console.log("Making request to VK");
-	getUnanswered((messages) => {
-		console.log("Got messages>" + JSON.stringify(messages.map(m => m.body)));
-		msnum = 0;
-		messages.forEach(function (el) {
-			msnum = msnum + 1;
+	getUnanswered((messages)=>{
+		console.log("Got messages>");console.log(messages);
+
+		messages.forEach(function(el) {
 			m = el.body;
-			if (m != "") {
+			if ((m != "")&&(el.chat_id==null)) {
 				console.log("Making request to bot for message " + el.id);
-				getBotAnswer(m, (repl) => {
+				getBotAnswer(el.user_id,m, (repl) => {
 					answer = repl.fulfillment.speech;
 					console.log("answer from ai id " + el.id + " >" + JSON.stringify(repl));
-					console.log("query is " + repl.resolvedQuery);
 					console.log("answer is " + answer + " Sending...\n");
 					console.log(el.user_id);
-					sendMsg(-1,answer,(res)=>{
+
+					//if(repl.action!="input.unknown")
+					sendMsg(el.user_id,answer,(res)=>{
 						 console.log("Message >" + answer + "< sent!\n");
-					})
+					});
 					
 				});
 			}
-			else {
-				console.log("empty message body for id" + el.mid + ">" + JSON.stringify(el));
+			else{
+				console.log("empty body")
 			}
 		});
 	});
@@ -54,9 +53,9 @@ function MainBot() {
 //
 
 //   ***----API.AI----***
-function getBotAnswer(msg, callback) {
+function getBotAnswer(sid,msg, callback) {
 	var apiurl = "https://api.api.ai/v1/query";
-	var sid = 42;
+//	var sid = 42;
 	var apitoken = loadlocalapitoken();
 	qs = {
 		v: "20150910",
@@ -64,28 +63,27 @@ function getBotAnswer(msg, callback) {
 		lang: "ru",
 		query: encodeURI(msg)
 	}
-	headers = {
-		Authorization: "Bearer " + apitoken
+	headers = {	
+		Authorization: "Bearer "+apitoken
 	}
-	console.log("--message to AI:" + msg);
 	console.log("--Talking with AI"); //debug
-	request({ url: apiurl, encoding: "utf8", qs: qs, headers: headers }, (err, res, body) => {
-		if (!err) {
+	request({url:apiurl,qs:qs,headers:headers},(err,res,body)=>{
+		console.log("---->"+JSON.stringify(res)); //debug
+		if(!err){
 			answer = JSON.parse(body);
-			if (answer.status.code == 200) {
+			if(answer.status.code==200){
 				callback(answer.result);
-			} else {
-				console.log("--ERROR from api.ai")
-				console.log("--" + answer.status.errorDetails);
+			}else{
+				console.log(answer);
 			}
-		} else {
+		}else{
 			console.log(err);
 			logger.err(err);
 		}
 	});
 }
 
-function loadlocalapitoken() {
+function loadlocalapitoken(){
 	return fs.readFileSync('.aitoken').slice(0, -1).toString();
 }
 
@@ -94,7 +92,7 @@ function loadlocalapitoken() {
 function sendMsg(id, text, callback) {
 	qs = {
 		user_id: id,
-		message: encodeURI(text)
+		message: (text)
 	}
 	var url = "https://api.vk.com/method/messages.send";
 	var token = loadlocaltoken();
@@ -120,18 +118,19 @@ function getUnanswered(callback) {
 		inmsg.forEach(i => {
 			if (i.date < offst) offst = i.date;
 		});
-		getMsg({ out: 1, count: 20, time_offset: offst }, function (outmsg) {
+		offst = Math.floor(Date.now() / 1000) - offst;
+		getMsg({ out: 1, count: 20,time_offset: offst }, function (outmsg) {
 			console.log("--finding unanswered vk msg"); //debug
 			result = inmsg.filter(function (i) {
-				// For each incomming message :
-				var out_from_same = outmsg.filter(o => (o.user_id == i.user_id));
-				if (out_from_same.length == 0) {
-					return true;
-				}
-				else {
-					var out_later_then_in = out_from_same.filter(o => (o.date > i.date));
-					return out_later_then_in.length == 0;
-				}
+					// For each incomming message :
+					var out_from_same = outmsg.filter(o => (o.user_id==i.user_id));
+					if(out_from_same.length==0){
+						return true;
+					}
+					else{
+						var out_later_then_in = out_from_same.filter(o=>(o.date>i.date));
+						return out_later_then_in.length == 0;
+					}
 			});	//res
 			callback(result);
 		});
@@ -145,15 +144,13 @@ function getMsg(qs, callback) {
 	qs.v = "5.65"
 	console.log("--Getting vk messages"); //debug
 	request({ url: url, qs: qs }, function (err, res, body) {
-		console.log("---->" + body + "<"); //debug
+//		console.log("---->"+body); //debug
 		if (err) { console.log(err); logger.err(err); }
 		else {
+			console.log(body)
 			var answ = JSON.parse(body);
 			if (answ.error == null) {
 				callback(answ.response.items);
-			} else {
-				console.log("vk returned error");
-				console.log(answ.error);
 			}
 		}
 	});
