@@ -15,7 +15,7 @@ var logger = confLog(log4js);
 console.log("Server lisetening in port " + PORT);
 app.listen(PORT);
 
-var job = new cronJob('*/8 * *  *  *  *', MainBot);
+var job = new cronJob('*/15 * *  *  *  *', MainBot);
 job.start();
 
 num = 0
@@ -36,7 +36,7 @@ function MainBot(){
 		prev_msg = messages
 		messages.forEach(function(el) {
 			m = el.body;
-			if ((m != "")&&(m.chat_id==null)) {
+			if ((m != "")&&(el.chat_id==null)) {
 				console.log("Making request to bot for message " + el.id);
 				getBotAnswer(el.user_id,m, (repl) => {
 					answer = repl.fulfillment.speech;
