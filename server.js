@@ -27,6 +27,7 @@ function MainBot(){
 	console.log("Cron job, call num "+num);
 	console.log("Making request to VK");
 	getUnanswered((messages)=>{
+<<<<<<< HEAD
 		if(!init_prev_msg){
 			prev_msg = messages
 			init_prev_msg = true}
