@@ -6,6 +6,7 @@ var request = require('request');
 
 var PORT = 4567;
 var apID = 6098753;
+var BLACKLIST = [18071208];
 
 var log4js = require('log4js');
 
@@ -18,28 +19,42 @@ var job = new cronJob('*/8 * *  *  *  *', MainBot);
 job.start();
 
 num = 0
+var prev_msg 
+var init_prev_msg = false
 function MainBot(){
 
 	num = num+1;
 	console.log("Cron job, call num "+num);
 	console.log("Making request to VK");
 	getUnanswered((messages)=>{
-		console.log("Got messages>");console.log(messages);
+		if(!init_prev_msg){
+			prev_msg = messages
+			init_prev_msg = true}
 
+		console.log("Got messages>");console.log(messages);
+		if(JSON.stringify(prev_msg) != JSON.stringify(messages)){
+		prev_msg = messages
 		messages.forEach(function(el) {
 			m = el.body;
-			if ((m != "")&&(el.chat_id==null)) {
+			if ((m != "")&&(m.chat_id==null)) {
 				console.log("Making request to bot for message " + el.id);
 				getBotAnswer(el.user_id,m, (repl) => {
 					answer = repl.fulfillment.speech;
-					console.log("answer from ai id " + el.id + " >" + JSON.stringify(repl));
-					console.log("answer is " + answer + " Sending...\n");
-					console.log(el.user_id);
+					//console.log("answer from ai id " + el.id + " >" + JSON.stringify(repl));
 
-					//if(repl.action!="input.unknown")
-					sendMsg(el.user_id,answer,(res)=>{
-						 console.log("Message >" + answer + "< sent!\n");
+					var bypass = true;
+					if(repl.action=="input.unknown"){bypass = false;}
+					if(BLACKLIST.indexOf(el.user_id)>-1) {bypass = false;}
+					if(bypass){
+						console.log("answer is " + answer + " Sending...\n");
+						logger.info("phrase: "+m+" reply: "+answer);
+						console.log(el.user_id);
+						sendMsg(el.user_id,answer,(res)=>{
+						console.log("Message >" + answer + "< sent!\n");
 					});
+					}else{
+					console.log("found input.unknown, not sending")
+					}
 					
 				});
 			}
@@ -47,6 +62,9 @@ function MainBot(){
 				console.log("empty body")
 			}
 		});
+		}else{
+			console.log("same messages, not touching ai")
+		}
 	});
 }
 
@@ -68,7 +86,7 @@ function getBotAnswer(sid,msg, callback) {
 	}
 	console.log("--Talking with AI"); //debug
 	request({url:apiurl,qs:qs,headers:headers},(err,res,body)=>{
-		console.log("---->"+JSON.stringify(res)); //debug
+	//	console.log("---->"+JSON.stringify(res)); //debug
 		if(!err){
 			answer = JSON.parse(body);
 			if(answer.status.code==200){
